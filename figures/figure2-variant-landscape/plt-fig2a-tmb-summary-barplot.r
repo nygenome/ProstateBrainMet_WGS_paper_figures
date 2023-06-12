@@ -39,10 +39,10 @@ reformat.conseqeunce = function(x) {
 
 ## Read arguments
 option_list = list(
-  make_option(c("-i", "--in_file"),   type='character', help="Output of init-tmb-summary-table.r"),
-  make_option(c("-m", "--id_map"),   type='character', help="Map between IDs"),
-  make_option(c("-O", "--sample_order"),   type='character', help="Optional sample ordering"),
-  make_option(c("-o", "--out_file"),  type='character', help="Output PDF"))
+  make_option(c("-i", "--in_file"),      type='character', help="Output of init-tmb-summary-table.r"),
+  make_option(c("-m", "--id_map"),       type='character', help="Map between IDs"),
+  make_option(c("-O", "--sample_order"), type='character', help="Optional sample ordering"),
+  make_option(c("-o", "--out_file"),     type='character', help="Output PDF"))
 opt = parse_args(OptionParser(option_list=option_list))
 
 

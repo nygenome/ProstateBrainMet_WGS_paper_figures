@@ -18,7 +18,11 @@ Evolution of Structural Rearrangements in Prostate Cancer Intracranial Metastase
     * ggalluvial
     * gGnome
     * gUtils
+    * gTrack
     * rtracklayer
+    * GenomicRanges
     * VariantAnnotation
     * MutationTimeR
     * plotly
+    * patchwork
+    * stringr
