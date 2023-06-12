@@ -14,3 +14,16 @@
 
 ################################################################# /COPYRIGHT ###
 ################################################################################
+
+## This bash script contains figure 3 associated scripts
+set -euo pipefail
+SRCDIR=$(realpath $(dirname $0))
+
+
+## Figure 3A - FGA barplot
+
+## Figure 3B - Junction burden heatmap
+
+## Figure 3C - AR rearrangements (WCM90)
+
+## Figure 3D - RB1 rearrangements (WCM12)

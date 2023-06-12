@@ -14,3 +14,12 @@
 
 ################################################################# /COPYRIGHT ###
 ################################################################################
+
+## This bash script contains figure 1 associated scripts
+set -euo pipefail
+SRCDIR=$(realpath $(dirname $0))
+
+
+## Figure 4A - MutationTimer summary barplots
+
+## Figure 4B - WCM12 alluvial plot

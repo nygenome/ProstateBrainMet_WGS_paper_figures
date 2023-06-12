@@ -5,7 +5,7 @@ This repository contains the code necessary for reproducing the figures and cust
 Evolution of Structural Rearrangements in Prostate Cancer Intracranial Metastases (link once available)
 
 ## Dependencies
-* R 4.0.0 or greater
+* R 3.6.1 or greater
 * The following R packages 
     * optparse
     * ComplexHeatmap

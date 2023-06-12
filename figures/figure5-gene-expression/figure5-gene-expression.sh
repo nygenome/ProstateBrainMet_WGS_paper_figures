@@ -14,3 +14,16 @@
 
 ################################################################# /COPYRIGHT ###
 ################################################################################
+
+## This bash script contains figure 1 associated scripts
+set -euo pipefail
+SRCDIR=$(realpath $(dirname $0))
+
+
+## Figure 5A - Expression heatmap
+
+
+## Figure 5B - Risk score boxplot 
+
+
+## Figure 5C - Volcano plot 

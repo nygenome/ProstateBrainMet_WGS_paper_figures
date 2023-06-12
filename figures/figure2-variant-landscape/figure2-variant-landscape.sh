@@ -14,3 +14,20 @@
 
 ################################################################# /COPYRIGHT ###
 ################################################################################
+
+## This bash script contains figure 2 associated scripts
+set -euo pipefail
+SRCDIR=$(realpath $(dirname $0))
+
+
+## Figure 2A - Coding mutation burden
+Rscript $SRCDIR/plt-fig2a-tmb-summary-barplot.r \
+     --in_file=$TMB_SUMMARY \
+     --id_map=$ID_MAPPING \
+     --sample_order=$FIG_2_ORDER \
+     --out_file=$SRCDIR/fig2a-tmb-summary-barplot.pdf
+
+
+## Figure 2B - Oncoprint 
+
+## Figure 2C - COSMIC SBS/DBS/ID contributions
