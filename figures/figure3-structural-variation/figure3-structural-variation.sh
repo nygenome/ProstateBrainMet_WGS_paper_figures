@@ -10,7 +10,7 @@
 # any warranty or guaranteed support whatsoever. The New York Genome Center
 # cannot be responsible for its use, misuse, or functionality.
 
-# Author: William F. Hooper & Timothy R. Chu 
+# Author: William F. Hooper
 
 ################################################################# /COPYRIGHT ###
 ################################################################################
