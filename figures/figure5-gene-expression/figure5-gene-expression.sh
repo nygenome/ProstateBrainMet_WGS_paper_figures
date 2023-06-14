@@ -20,7 +20,8 @@ set -euo pipefail
 SRCDIR=$(realpath $(dirname $0))
 
 
-## Figure 5A - Expression heatmap
+## Figures 5A,B,C
+Rscript 
 
 
 ## Figure 5B - Risk score boxplot 
