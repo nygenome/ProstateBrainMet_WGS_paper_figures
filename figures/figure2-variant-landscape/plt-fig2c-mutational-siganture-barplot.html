@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <style>
+        #chart {
+            position: fixed;
+            left: 0px;
+            right: 0px;
+            top: 0px;
+            bottom: 0px;
+            z-index: -2;
+            height: 100%;
+        }
+        body {
+            font-family: sans-serif
+        }
+        div.tooltip {
+            position: absolute;
+            text-align: left;
+            width: 150px;
+            height: auto;
+            padding-left: 10px;
+            padding-bottom: 10px;
+            font: 12px sans-serif;
+            border: 0.5px solid gray;
+            background: white;
+            border-radius: 5px;
+            pointer-events: none;
+            padding-top: 10px;
+            box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+        }
+    </style>
+  </head>
+  <body>
+    <div>
+        Filter Artifacts: <input type="checkbox" id="filterArtifacts">
+        <br>
+        Min. Threshold: <input type="number" id="thresh_min" value=0 step=0.01> Signature Threshold: <input type="number" id="thresh_sig" value=0 step=0.01> 
+        <br>
+        Group by: <select id="groupByList"></select> Split Groups: <input type="checkbox" id="splitGroups">
+        <br>
+        Sort by: <select id="sortByList"></select>
+    </div>
+    <div id="chart">
+    </div>
+    <script>
+        var chartDiv = document.getElementById("chart");
+        var margin = 20
+        var width = chartDiv.clientWidth;
+        var height = chartDiv.clientHeight;
+        var xshift = 70
+        var groupBy = d3.select('#groupByList')
+        var sortBy = d3.select('#sortByList')
+        var filterArtifacts = d3.select('#filterArtifacts')
+        var splitGroups = d3.select('#splitGroups')
+
+        var signatureColors = ['#e41a1c','#377eb8','#4daf4a','#ff7f00','#984ea3','#ffff33','#a65628','#f781bf','#999999','#66c2a5','#fc8d62','#8da0cb','#e78ac3','#a6d854','#ffd92f','#e5c494','#b3b3b3','#8dd3c7','#ffffb3','#bebada','#fb8072','#80b1d3','#fdb462','#b3de69','#fccde5','#d9d9d9','#bc80bd','#ccebc5','#ffed6f','#4e79a7','#f28e2c','#e15759','#76b7b2','#664040','#59a14f','#edc949','#af7aa1','#ff9da7','#b37654','#bab0ab','#1f77b4','#ff7f0e','#2ca02c','#a81d1d','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#664f40','#17becf','#666540','#446640','#40664e','#406660','#405966','#404a66','#464066','#574066','#664065','#664050','#664049','#732222','#737322','#407322','#22733d','#227368','#734822','#7fc97f','#beaed4','#fdc086','#ffff99','#386cb0','#f0027f','#bf5b17','#666666','#1b9e77','#d95f02']
+        var signatureColors_dbs = ['#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a','#ffff99','#b15928']
+        var signatureColors_id = ['#8dd3c7','#ffffb3','#bebada','#fb8072','#80b1d3','#fdb462','#b3de69','#fccde5','#d9d9d9','#bc80bd','#ccebc5','#ffed6f','#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c']
+        var signatureColors_sv = signatureColors
+
+        var signatureDesc = ['Sponatneous deanimation of 5-methylcytosine (clock-like signature)',
+            'Activity of APOBEC family of cytidine deaminases',
+            'Defective homologous recombination DNA damage repair',
+            'Tobacco smoking',
+            'Unknown (clock-like signature)',
+            'Defective DNA mismatch repair',
+            'Ultraviolet light exposure',
+            'Ultraviolet light exposure',
+            'Ultraviolet light exposure',
+            'Ultraviolet light exposure',
+            'Unknown',
+            'Polymerase eta somatic hypermutation activity',
+            'Polymerase epsilon exonuclease domain mutations',
+            'Polymerase epsilon exonuclease domain mutations',
+            'Defective POLD proofreading',
+            'Defective POLD proofreading',
+            'Temozolomide treatment',
+            'Unknown',
+            'Activity of APOBEC family of cytidine deaminases',
+            'Concurrent polymerase epsilon mutation and defective DNA mismatch repair',
+            'Defective DNA mismatch repair',
+            'Unknown',
+            'Unknown',
+            'Unknown',
+            'Damage by reactive oxygen species',
+            'Unknown',
+            'Concurrent POLD1 mutations and defective DNA mismatch repair',
+            'Defective DNA mismatch repair',
+            'Aristolochic acid exposure',
+            'Unknown',
+            'Aflatoxin exposure',
+            'Chemotherapy treatment',
+            'Defective DNA mismatch repair',
+            'Possible sequencing artifact',
+            'Unknown',
+            'Tobacco chewing',
+            'Defective DNA base excision repair due to NTHL1 mutations',
+            'Platinum chemotherapy treatment',
+            'Azathioprine treatment',
+            'Unknown',
+            'Unknown',
+            'Platinum chemotherapy treatment',
+            'Defective DNA base excision repair due to MUTYH mutations',
+            'Unknown',
+            'Indirect effect of ultraviolet light',
+            'Unknown',
+            'Unknown',
+            'Unknown',
+            'Haloalkane exposure',
+            'Possible sequencing artifact',
+            'Defective DNA mismatch repair',
+            'Possible sequencing artifact',
+            'Possible sequencing artifact',
+            'Possible sequencing artifact',
+            'Possible sequencing artifact',
+            'Possible sequencing artifact',
+            'Possible sequencing artifact',
+            'Possible sequencing artifact',
+            'Possible sequencing artifact',
+            'Possible sequencing artifact',
+            'Possible sequencing artifact',
+            'Possible sequencing artifact',
+            'Possible sequencing artifact',
+            'Possible sequencing artifact',
+            'Possible sequencing artifact',
+            'Possible sequencing artifact',
+            'Possible sequencing artifact',
+            'Activity of activation-induced cytidine deminase (AID)',
+            'Indirect effects of activation-induced cytidine deaminase (AID)',
+            'Unknown chemotherapy treatment',
+            'Thiopurine chemotherapy treatment',
+            'Colibactin exposure (E.coli bacteria carrying pks pathogenicity island)',
+            'Unknown',
+            'Duocarmycin exposure',
+            'Unknown',
+            'Tobacco smoking',
+            'Unknown',
+            'Unknown'
+        ]
+        var signatureDesc_id = [
+            'Slippage during DNA replication of the replicated DNA strand',
+            'Slippage during DNA replication of the replicated DNA strand',
+            'Tobacco smoking',
+            'Unknown',
+            'Unknown',
+            'Defective homologous recombination DNA damage repair',
+            'Defective DNA mismatch repair',
+            'Repair of DNA double strand breaks by NHEJ or mutations in TOP2A',
+            'Unknown',
+            'Unknown',
+            'Unknown',
+            'Unknown',
+            'UV light exposure',
+            'Unknown',
+            'Unknown',
+            'Unknown',
+            'Mutations in topoisomerase TOP2A',
+            'Colibactin exposure'
+        ]
+        var signatureDesc_dbs = [
+            'UV light exposure',
+            'Tobacco smoking and other mutagens',
+            'Polymerase epsilon exonuclease domain mutations',
+            'Unknown',
+            'Platinum chemo treatment',
+            'Unknown',
+            'Defective DNA mismatch repair',
+            'Unknown',
+            'Unknown',
+            'Defective DNA mismatch repair',
+            'Unknown'
+        ]
+
+        var signatures = ["SBS1","SBS2","SBS3","SBS4","SBS5","SBS6","SBS7a","SBS7b","SBS7c","SBS7d","SBS8","SBS9","SBS10a","SBS10b","SBS10c","SBS10d","SBS11","SBS12","SBS13","SBS14","SBS15","SBS16","SBS17a","SBS17b","SBS18","SBS19","SBS20","SBS21","SBS22","SBS23","SBS24","SBS25","SBS26","SBS27","SBS28","SBS29","SBS30","SBS31","SBS32","SBS33","SBS34","SBS35","SBS36","SBS37","SBS38","SBS39","SBS40","SBS41","SBS42","SBS43","SBS44","SBS45","SBS46","SBS47","SBS48","SBS49","SBS50","SBS51","SBS52","SBS53","SBS54","SBS55","SBS56","SBS57","SBS58","SBS59","SBS60","SBS84","SBS85","SBS86","SBS87","SBS88","SBS89","SBS90","SBS91","SBS92","SBS93","SBS94"] 
+        var all_signatures = [...signatures]
+
+        var signatures_dbs = ["DBS1","DBS2","DBS3","DBS4","DBS5","DBS6","DBS7","DBS8","DBS9","DBS10","DBS11"]
+        var all_signatures_dbs = [...signatures_dbs]
+        var signatures_id = ["ID1","ID2","ID3","ID4","ID5","ID6","ID7","ID8","ID9","ID10","ID11","ID12","ID13","ID14","ID15","ID16","ID17","ID18"] 
+        var all_signatures_id = [...signatures_id]
+
+        var scale = d3.scaleLinear().range([0,height]).domain([0,1000])
+        var x = d3.scaleBand().range([xshift,width-500])
+
+        var y = d3.scaleLinear().range([height-scale(325),height-scale(600)]).domain([0,1.00])
+        var y_dbs = d3.scaleLinear().range([height-scale(605),height-scale(830)]).domain([0,1.00])
+        var y_id = d3.scaleLinear().range([height-scale(835),height-scale(960)]).domain([0,1.00])
+
+        var colorScale = d3.scaleOrdinal().range(signatureColors).domain(all_signatures)
+        var colorScale_dbs = d3.scaleOrdinal().range(signatureColors_dbs).domain(all_signatures_dbs)
+        var colorScale_id = d3.scaleOrdinal().range(signatureColors_id).domain(all_signatures_id)
+
+        var descScale = d3.scaleOrdinal().range(signatureDesc).domain(all_signatures)
+        var descScale_dbs = d3.scaleOrdinal().range(signatureDesc_dbs).domain(all_signatures_dbs)
+        var descScale_id = d3.scaleOrdinal().range(signatureDesc_id).domain(all_signatures_id)
+
+        var svg = d3.select("body").append("svg")
+            .attr("width", chartDiv.clientWidth - margin)
+            .attr("height", chartDiv.clientHeight - margin)
+            .attr('transform','translate(' + margin/4 + ',' + margin/4 + ')')
+
+        var div = d3.select("body").append("div")
+            .attr("class", "tooltip")
+            .style("opacity", 0);
+        
+        var yaxis = d3.axisLeft()
+            .scale(y)
+
+        var yaxis_id = d3.axisLeft()
+            .scale(y_id)
+            .ticks(5)
+        
+        var yaxis_dbs = d3.axisLeft()
+            .scale(y_dbs)
+            .ticks(5)
+
+        var xaxis = d3.axisBottom()
+            .scale(x)
+        
+        var legend = svg.append('g').attr('class','legend').attr('transform','translate(' + (width-200) + ',0)')
+
+        function shuffle(a) {
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
+            }
+            return a;
+        }
+        
+        function colorMetadata(key,metadata){
+            var metaValues = []
+            metadata.forEach(function(d){metaValues.push(d[key])})
+            //console.log(metaValues)
+            //check if metadata is numerical
+            metaValues = metaValues.sort()
+            if(!metaValues.some(isNaN)){
+                //if numerical, get range
+                metaValues = metaValues.map(Number);
+                var hue = Math.floor(Math.random()*360)
+                var hsl_high = d3.color('hsl('+hue+',90%,15%)')
+                var hsl_low = d3.color('hsl('+hue+',90%,80%)')
+                var outputScale = d3.scaleLinear().range([hsl_low.toString(),hsl_high.toString()]).domain([Math.min(...metaValues),Math.max(...metaValues)])
+                return outputScale
+            }
+            else {
+                //if not numerical, make range with unique list of variables, assign n random colors to?
+                uniqValues = [...new Set(metaValues)]
+                uniqValues = shuffle(uniqValues)
+                colorRange = []
+                var saturation = Math.floor(Math.random()*70)
+                var lightness = Math.floor(Math.random()*60)
+                for(k in uniqValues){
+                    //var hue = Math.floor(Math.random()*360)
+                    var hue = (360/uniqValues.length) * k
+                    colorRange.push('hsl(' + hue + ',' + (30 + saturation) +'%,' + (20 + lightness) + '%)')
+                }
+                
+                if(uniqValues.includes("")){
+                    colorRange[uniqValues.indexOf("")] = 'white'
+                }
+                else{
+                    uniqValues.push('')
+                    colorRange.push('white')
+                }
+                return d3.scaleOrdinal().range(colorRange).domain(uniqValues)
+                
+            }
+        }
+        
+        
+        //start drawing actual data
+        //d3.tsv('bladder_cancer.txt', function(error,data){
+            //if (error) throw error;
+            
+        Promise.all([d3.tsv('Cornell_Brain.cosmic.v3.2.deconstructSigs.v1.9.0.wcm.txt'), d3.tsv('purity_ploidy_bel.wcm.txt'),d3.tsv('cornell_bel.cosmicv3.2.dbs.wcm.txt'), d3.tsv('cornell_bel.cosmicv3.2.id.wcm.txt') ]).then(function(d){
+            var orig_data = d[0]
+            var data = [...orig_data]
+            var metadata = d[1]
+            var data_dbs = d[2]
+            var data_id = d[3]
+            var data_bg = data
+            data_bg.forEach(object => {
+                object.Other = 1
+            });
+            
+            console.log(data)
+            console.log(metadata)
+            
+            var removeSignatures = function(signaturesToRemove, signaturesToRemoveFrom = signatures, orignal_signatures){
+                for(sigs in signaturesToRemove){
+                    if(signaturesToRemoveFrom.includes(signaturesToRemove[sigs])){
+                        signaturesToRemoveFrom.splice(signaturesToRemoveFrom.indexOf(signaturesToRemove[sigs]),1)
+                        document.getElementById(signaturesToRemove[sigs]+'text').style.fill = 'lightgray'
+                    }
+                    else{
+                        signaturesToRemoveFrom.push(signaturesToRemove[sigs])
+                        document.getElementById(signaturesToRemove[sigs]+'text').style.fill = 'black'
+                        signaturesToRemoveFrom.sort(function(a,b){
+                            return orignal_signatures.indexOf(a) - orignal_signatures.indexOf(b)
+                        })
+                    }
+                }
+                var layers_bg = d3.stack().keys(['Other'])(data)
+                var layers = d3.stack().keys(signatures)(data)
+                var layers_dbs = d3.stack().keys(signatures_dbs)(data_dbs)
+                var layers_id = d3.stack().keys(signatures_id)(data_id)
+                //var layers_sv = d3.stack().keys(sv_types)(data_sv)
+                svg.selectAll('.layer').remove()
+                drawLayers(layers_bg, y, descScale, d3.scaleOrdinal().domain(['Other']).range(['#AFAFAF']))
+                drawLayers(layers, y, descScale, colorScale)
+                drawLayers(layers_dbs, y_dbs, descScale_dbs, colorScale_dbs)
+                drawLayers(layers_id, y_id, descScale_id, colorScale_id)
+                drawLayers(layers_sv, y_sv, descScale_sv, colorScale_sv)
+            }
+            sortBy.append('option')
+                .attr('value',"patient")
+                .text("patient")
+
+            var drawLegend = function(signatures, x, y, descScale, colorScale, orignal_signatures){
+                for(i in signatures){
+                    legend.append('rect')
+                        .attr('x', x)
+                        .attr('y', scale(y + (i*12)))
+                        .attr('fill', function(d){
+                            return colorScale(signatures[i])
+                        })
+                        .attr('height',10)
+                        .attr('width',10)
+                        .attr('id', signatures[i] + 'rect')
+                        .on('mouseover', function(){
+                            div.html(
+                                "<b>" + (this.id).slice(0,-4) + "</b>: <br>"+
+                                descScale(this.id.slice(0,-4)) + "<br><br> (click to hide)"
+                            )
+                            div.style("left", (d3.event.pageX + 10) + "px")
+                            div.style("top", (d3.event.pageY + 15) + "px")
+                            div.style('opacity','0.9')
+                            div.style('background', 'gray')
+                            d3.select(this)
+                                .attr('stroke','black')
+                                .attr('stroke-width', '2px')
+                        })
+                        .on('mouseout', function(){
+                            d3.select(this)
+                                .attr('stroke','none')
+                            div.style('opacity','0')
+                        })
+                        .on('click', function(){
+                            removeSignatures([this.id.slice(0,-4)], signatures, orignal_signatures)
+                        })
+
+                    legend.append('text')
+                        .attr('x', x + 10)
+                        .attr('y', scale(y + (i*12)))
+                        .attr('id', signatures[i] + 'text')
+                        .text(signatures[i])
+                        .attr('fill','black')
+                        .attr('dy',scale(9))
+                        .style('font-size',scale(12))
+
+                    sortBy.append('option')
+                        .attr('value',signatures[i])
+                        .text(signatures[i])
+                }
+            }
+
+            drawLegend(signatures, -220,0, descScale, colorScale, all_signatures)
+            drawLegend(signatures_dbs, -105,0, descScale_dbs, colorScale_dbs, all_signatures_dbs)
+            drawLegend(signatures_id, -105,150, descScale_id, colorScale_id, all_signatures_id)
+            
+            var drawLayers = function(layers, y, descScale, colorScale){
+                var layer = svg.selectAll('layer')
+                    .data(layers)
+                    .enter()
+                    .append('g')
+                    .attr('class','layer')
+                    .attr('id', function(d){
+                        return d.key
+                    })
+                    .style('fill',function(d){
+                        return colorScale(d.key)
+                    })
+
+                layer.selectAll('rect')
+                    .data(function(d){
+                        return d
+                    })
+                    .enter()
+                    .append('rect')
+                    .attr('class','BAR')
+                    .attr('x', function(d){
+                        return x(d.data.Sample)
+                    })
+                    .attr('y', function(d){
+                        return y(d[1])
+                    })
+                    .attr('height', function(d){
+                        return y(d[0]) - y(d[1])
+                    })
+                    .attr('width', x.bandwidth()-0.5)
+                    .on('mouseover', function(d){
+                        div.html(
+                            d.data.Sample + '<br>' +
+                            "<b>" + this.parentElement.getAttribute('id') + "</b>: " + String((d[1] - d[0]).toFixed(3)) + '<br>' +
+                            descScale(this.parentElement.getAttribute('id'))
+                        )
+                        div.style("left", (d3.event.pageX + 10) + "px")
+                        div.style("top", (d3.event.pageY + 15) + "px")
+                        div.style('opacity','0.9')
+                        div.style('background', 'gray')
+                        d3.select(this)
+                            .attr('stroke','black')
+                            .attr('stroke-width', '2px')
+                    })
+                    .on('mouseout', function(){
+                        d3.select(this)
+                            .attr('stroke','none')
+                        div.style('opacity','0')
+                    })
+            }
+            
+            var layers = d3.stack().keys(signatures)(data)
+            var layers_dbs = d3.stack().keys(signatures_dbs)(data_dbs)
+            var layers_id = d3.stack().keys(signatures_id)(data_id)
+
+            var metaList = Object.keys(metadata[0])
+            
+            var samples = layers[0].map(function(d){
+                //console.log(d.data.Sample)
+                return d.data.Sample
+            })
+            //include manual sample ordering
+            samples = ["WCM1207_BR_1","WCM1207_LV_1"," ",
+                "WCM493_BR_1","  ",
+                "WCM1358_BR_1","WCM1358_LN_2","WCM1358_PP_3","WCM1358_LV_1","   ",
+                "WCM90_LV_1","WCM90_LN_1","WCM90_LN_2","    ",
+                "WCM1388_LV_1","     ",
+                "WCM12_BR_2","WCM12_BR_3","WCM12_PR_1","      ",
+                "WCM428_BR_1","       ",
+                "WCM159_LG_4","WCM159_LN_3","WCM159_LN_1","WCM159_AG_2","WCM159_PR_1","        ",
+                "WCM7_LV_1","         ",
+                "WCM4_PR_1","          ",
+                "WCM191_BR_1","           ",
+                "WCM59_LV_1","            ",
+                "WCM1024_BR_1","             ",
+                "WCM2086_BR_1","              ",
+                "WCM0_LV_1","WCM0_LV_2","               ",
+                "WCM63_LV_2","WCM63_PR_2","WCM63_LG_3","WCM63_PR_1","                ",
+                "WCM223_BR_1","WCM223_PR_1","                 ",
+                "WCM677_LV_2","WCM677_BN_1","WCM677_LG_4","WCM677_LN_3","                  ",
+                "WCM89_LN_1","                   ",
+                "WCM1_BN_1","                    ",
+                "WCM1232_LN_1","WCM1232_LN_2","                     ",
+            ]
+            console.log(layers)
+            //console.log(samples)
+            
+            x.domain(samples)
+            //x.domain(sortedSamples)
+            console.log(Object.keys(metadata).length)
+            
+            drawLayers(layers, y, descScale, colorScale)
+            drawLayers(layers_dbs, y_dbs, descScale_dbs, colorScale_dbs)
+            drawLayers(layers_id, y_id, descScale_id, colorScale_id)
+
+			//drawDots(data)
+            svg.append('g')
+                .attr('class','yaxis')
+                .attr('transform',`translate(${xshift-5},0)`)
+                .call(yaxis)
+
+            svg.append("text")
+                .attr('y', y(0.5))
+                .text("SBS")
+            
+            svg.append('g')
+                .attr('class','yaxis_dbs')
+                .attr('transform',`translate(${xshift-5},0)`)
+                .call(yaxis_dbs)
+            
+            svg.append("text")
+                .attr('y', y_dbs(0.5))
+                .text("DBS")
+            
+            svg.append('g')
+                .attr('class','yaxis_id')
+                .attr('transform',`translate(${xshift-5},0)`)
+                .call(yaxis_id)
+            
+            svg.append("text")
+                .attr('y', y_id(0.5))
+                .text("ID")
+
+            svg.append('g')
+                .attr('class','xaxis')
+                .attr('transform',`translate(0,${scale(700) + scale(metaList.length * 8)})`)
+                .call(xaxis)
+                .selectAll('text')
+                    .style('text-anchor','end')
+                    .attr('font-size',scale(15))
+                    .attr('dy', -6)
+                    .attr('dx', -10)
+                    .attr('transform', function(d){
+                        return "rotate(-90)"
+                    })
+            
+            
+            cellHeight=18
+            cellWidth=10
+            cellPadding=0.3
+            metadataHeight=9
+            yAxistextSize = 10
+            
+            var metaTracks = svg.append('g')
+                .attr('class','metadata')
+                .attr('transform', function(d){
+                    //return 'translate(' + y(yAxisWidth) + ',' + ((y(cellHeight) + cellPadding) * genes.length) + ')'
+                    return 'translate(' + 0 + ','+y(0)+')'
+                })
+            
+            var metaTrack = metaTracks.selectAll('.metadata')
+                .data(metadata).enter()
+                .append('g')
+            
+            var metaLegendOffset = 0
+            
+            console.log(metaList)
+            groupBy.append('option')
+                .attr('value',"none")
+                .text("none")
+            for (i in metaList){
+                if(metaList[i] != 'tumor'){
+                    //add meta value to groupBy list
+                    groupBy.append('option')
+                        .attr('value',metaList[i])
+                        .text(metaList[i])
+                    //generate colorscale for meta value
+                    metaColorScale = colorMetadata(metaList[i], metadata)
+                    //for each sample, draw squares for each meta value
+                    console.log(metaList[i])
+                    metaTrack.append('rect')
+                        .attr('class',function(d){return d.tumor + " COL"})
+                        .attr('id', metaList[i])
+                        .attr('width', x.bandwidth()-0.5)
+                        .attr('height',scale(cellHeight/2))
+                        .attr('fill',function(d){
+                            return metaColorScale(d[metaList[i]])
+                        })
+                        .attr('x', function(d){return x(d.tumor)})
+                        .attr('y', (scale(metadataHeight) + cellPadding) * i)
+                        .attr('pointer-events', function(d){
+                            if (d[this.id] != ''){
+                                return 'all'
+                            }
+                            else {
+                                return 'none'
+                            }
+                        })
+                        .on('mouseover', function(d){
+                            //console.log(d)
+                            div.html(
+                                this.id + ': ' + d[this.id]
+                            )
+                            div.style("left", (d3.event.pageX + 10) + "px")
+                            div.style("top", (d3.event.pageY + 15) + "px")
+                            div.style('opacity','0.9')
+                            div.style('background', 'gray')
+                            d3.select(this)
+                                .attr('stroke','black')
+                                .attr('stroke-width', '2px')
+                        })
+                        .on('mouseout', function(){
+                            d3.select(this)
+                                .attr('stroke','none')
+                            div.style('opacity','0')
+                        })
+                    //append label
+                    metaTracks.append('text')
+                        .text(metaList[i])
+                        .attr('dx', width-495)
+                        .attr('dy', scale(7))
+                        .attr('text-anchor', 'start')
+                        .attr('y', (scale(metadataHeight) + cellPadding) * i)
+                        .attr('font-size',scale(yAxistextSize))
+                    
+                    var metaValues = metadata.map(a => a[metaList[i]])
+                    
+                    if(metaList[i] != 'patient'){
+                        if(!metaValues.some(isNaN)){
+                            legend.append('text')
+                                .text(metaList[i])
+                                .attr('font-size',scale(yAxistextSize))
+                                .attr('font-weight', 'bold')
+                                .attr('y', function(d){return (scale(cellHeight/2) + (cellPadding*2)) + metaLegendOffset})
+                                .attr('dy', scale(-2))
+                            metaLegendOffset =  (scale(cellHeight/2) + (cellPadding*2)) + metaLegendOffset
+
+                            legendArray = []
+                            for(j=Math.min(...metaValues); j <= Math.max(...metaValues); j = ((Math.max(...metaValues) - Math.min(...metaValues))/5)+j ){
+                                legendArray.push(j)
+                            }
+
+                            for(j=0; j < 5; j++){
+                                legend.append('rect')
+                                    .attr('width',scale(cellWidth))
+                                    .attr('height',scale(cellHeight/2))
+                                    .attr('fill',function(d){
+                                        return metaColorScale(legendArray[j])
+                                    })
+                                    .attr('x', function(d){return scale(cellWidth) * j})
+                                    .attr('y', function(d){return metaLegendOffset})    
+                            }
+                            legend.append('text')
+                                .text(Math.min(...metaValues))
+                                .attr('font-size',scale(yAxistextSize))
+                                .attr('text-anchor', 'middle')
+                                .attr('y', function(d){return (scale(cellHeight/2) + (cellPadding*2)) + metaLegendOffset})
+                                .attr('dy', scale(cellHeight)/2)
+
+                            legend.append('text')
+                                .text(Math.max(...metaValues))
+                                .attr('font-size',scale(yAxistextSize))
+                                .attr('text-anchor', 'middle')
+                                .attr('x', function(d){return scale(cellWidth) * 5})
+                                .attr('y', function(d){return (scale(cellHeight/2) + (cellPadding*2)) + metaLegendOffset})
+                                .attr('dy', scale(cellHeight)/2)
+
+                            metaLegendOffset =  (scale(cellHeight/2) + (cellPadding*2)) * 2 + metaLegendOffset
+
+                        }
+                        else{
+                            var uniqValues = [...new Set(metaValues)]
+                            if(uniqValues.includes('')){
+                                uniqValues.splice(uniqValues.indexOf(''),1)
+                            }
+                            legend.append('text')
+                                .text(metaList[i])
+                                .attr('font-size',scale(yAxistextSize))
+                                .attr('font-weight', 'bold')
+                                .attr('y', function(d){return (scale(cellHeight/2) + (cellPadding*2)) + metaLegendOffset})
+                                .attr('dy', scale(-2))
+
+                            metaLegendOffset =  (scale(cellHeight/2) + (cellPadding*2)) + metaLegendOffset
+
+                            for(j in uniqValues){
+                                legend.append('rect')
+                                    .attr('width',scale(cellWidth))
+                                    .attr('height',scale(cellHeight/2))
+                                    .attr('fill',function(d){
+                                        return metaColorScale(uniqValues[j])
+                                    })
+                                    .attr('y', function(d){return (scale(cellHeight/2) + (cellPadding*2)) * j + metaLegendOffset})
+
+                                legend.append('text')
+                                    .text(uniqValues[j])
+                                    .attr('font-size',scale(yAxistextSize))
+                                    .attr('x', scale(cellWidth) + cellPadding)
+                                    .attr('y', function(d){return (scale(cellHeight/2) + (cellPadding*2)) * j + metaLegendOffset})
+                                    .attr('dy', scale(8))
+                            }
+                            metaLegendOffset =  (scale(cellHeight/2) + (cellPadding*2)) * (uniqValues.length + 1) + metaLegendOffset
+                        }
+                    }
+                }
+            }
+
+            var adjustThresh = d3.select('#thresh_min')
+            adjustThresh.on('change', function(){
+                data = JSON.parse(JSON.stringify(orig_data));
+                for(i in data){
+                    for(j in data[i]){
+                        if(j != 'Sample'){
+                            if(data[i][j] < adjustThresh.property("value")){
+                                data[i][j] = 0
+                            }
+                        }
+                    }
+                }
+                layers = d3.stack().keys(signatures)(data)
+                svg.selectAll('.layer').remove()
+                drawLayers(layers, y, descScale, colorScale)
+                drawLayers(layers_dbs, y_dbs, descScale_dbs, colorScale_dbs)
+                drawLayers(layers_id, y_id, descScale_id, colorScale_id)
+            })
+			
+			var adjustThreshSig = d3.select('#thresh_sig')
+            adjustThreshSig.on('change', function(){
+                data = JSON.parse(JSON.stringify(orig_data));
+				
+				for(j in data[0]){
+					if(j != 'Sample'){
+						if (Math.max.apply(Math, data.map(function(o) {return o[j];})) < adjustThreshSig.property("value")){
+							for(i in data){
+								data[i][j] = 0
+							}
+						}
+					}
+					
+				}
+                layers = d3.stack().keys(signatures)(data)
+                svg.selectAll('.layer').remove()
+                drawLayers(layers, y, descScale, colorScale)
+                drawLayers(layers_dbs, y_dbs, descScale_dbs, colorScale_dbs)
+                drawLayers(layers_id, y_id, descScale_id, colorScale_id)
+            })
+            
+            filterArtifacts.on('click', function(d){
+                console.log(filterArtifacts.property("checked"))
+                artifactSignatures = ['SBS27','SBS43','SBS45','SBS46','SBS47','SBS48','SBS49','SBS50','SBS51','SBS52','SBS53','SBS54','SBS55','SBS56','SBS57','SBS58','SBS59','SBS60']
+                removeSignatures(artifactSignatures, signatures, all_signatures)
+            })
+            
+            var groupFunc = function(){
+                var groupValue = document.getElementById("groupByList").value
+                var sortValue = document.getElementById("sortByList").value
+                var resortedSamples = [...samples].sort(function (a, b) {
+					console.log(metadata.filter(function(f){return f.tumor == a})[0])
+                    meta_a = metadata.filter(function(f){return f.tumor == a})[0][groupValue]
+                    meta_b = metadata.filter(function(f){return f.tumor == b})[0][groupValue]
+                    if(sortValue == 'patient'){
+                        data_a = a
+                        data_b = b
+                    }
+                    else{
+                        if(sortValue.startsWith('SBS')){
+                            data_a = Number(data.filter(function(f){return f.Sample == a})[0][sortValue])
+                            data_b = Number(data.filter(function(f){return f.Sample == b})[0][sortValue])
+                        }
+                        else if(sortValue.startsWith('DBS')){
+                            data_a = Number(data_dbs.filter(function(f){return f.Sample == a})[0][sortValue])
+                            data_b = Number(data_dbs.filter(function(f){return f.Sample == b})[0][sortValue])
+                        }
+                        else if(sortValue.startsWith('ID')){
+                            data_a = Number(data_id.filter(function(f){return f.Sample == a})[0][sortValue])
+                            data_b = Number(data_id.filter(function(f){return f.Sample == b})[0][sortValue])
+                        }
+                        else{
+                            
+                        }
+                        
+                    }
+                    if(Number(meta_a) && Number(meta_b)){
+                        meta_a = Number(meta_a)
+                        meta_b = Number(meta_b)
+                    }
+                    
+                    if(meta_a > meta_b){
+                        return 1
+                    }
+                    else if(meta_a == meta_b){
+                        if(data_a > data_b){
+                            return 1
+                        }
+                        else{
+                            return -1
+                        }
+                    }
+                    else {
+                        return -1
+                    }
+                    return 0
+                });
+                if(splitGroups.property("checked")){
+                    var insertIndices = []
+                    for(j in resortedSamples){
+                        if(j>0){
+                            meta_a = metadata.filter(function(f){return f.tumor == resortedSamples[j-1]})[0]
+                            meta_b = metadata.filter(function(f){return f.tumor == resortedSamples[j]})[0]
+                            if(meta_a[groupValue] != meta_b[groupValue]){
+                                insertIndices.push(j)
+                            }
+                        }
+                    }
+                    for(i = insertIndices.length-1; i >= 0; i--){
+                        resortedSamples.splice(insertIndices[i],0," ".repeat(i))
+                    }
+                }
+                x.domain(resortedSamples)
+                svg.selectAll('.BAR')
+                    .attr('x',function(d){return x(d.data.Sample)})
+                    .attr('width', x.bandwidth()-0.5)
+                svg.selectAll('.COL')
+                    .attr('x',function(d){return x(d.tumor)})
+                    .attr('width', x.bandwidth()-0.5)
+                svg.select("g.xaxis")
+                    .call(d3.axisBottom().scale(x))
+            }
+            
+            //groupBy code
+            groupBy.on('change',function(d){
+                groupFunc()
+            })
+            
+            //splitGroups code
+            splitGroups.on('change',function(d){
+                groupFunc()
+            })
+            
+            sortBy.on('change',function(d){
+                groupFunc()
+            })
+        })
+
+    </script>
+  </body>
+</html>
