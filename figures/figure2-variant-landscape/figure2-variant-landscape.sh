@@ -29,7 +29,7 @@ Rscript $SRCDIR/plt-fig2a-tmb-summary-barplot.r \
 
 
 ## Figure 2B - Oncoprint 
-#edit html file to include metadata.txt and oncomatrix.txt inputs
+## Edit plt-fig2b-oncoprint.html to include metadata.txt and oncomatrix.txt inputs
 
 ## Figure 2C - COSMIC SBS/DBS/ID contributions
-#edit html file to include SBS, DBS, and ID signatures
+## Edit plt-fig2c-mutational-signature-barplot.html file to include SBS, DBS, and ID signatures
