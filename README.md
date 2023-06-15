@@ -7,48 +7,42 @@ Evolution of Structural Rearrangements in Prostate Cancer Intracranial Metastase
 ## Dependencies
 * R 3.6.1 or greater
 * The following R packages (for figures 2-4)
-    * optparse
-    * ComplexHeatmap
     * circlize
-    * viridisLite
-    * data.table
-    * ggplot2
-    * reshape2
-    * ggpubr
+    * ComplexHeatmap
+    * GenomicRanges
     * ggalluvial
     * gGnome
-    * gUtils
+    * ggplot2
     * gTrack
-    * rtracklayer
-    * GenomicRanges
-    * VariantAnnotation
+    * gUtils
     * MutationTimeR
-    * plotly
+    * optparse
     * patchwork
+    * reshape2
     * stringr
+    * VariantAnnotation
 
 * The following R packages (for figure 5 analysis + plotting)
-    * dplyr
-    * NanoStringQCPro
-    * ggplot2
-    * EnvStats
-    * pheatmap
-    * RUVSeq
+    * biomaRt
+    * circlize
+    * ComplexHeatmap
     * DESeq2
-    * limma
-    * matrixStats
-    * survival
-    * stringr
-    * survminer
+    * dplyr
+    * EnvStats
+    * ggplot2
+    * ggpubr
+    * ggrepel
     * limma
     * lsa
-    * tidyr
-    * biomaRt
-    * ggrepel
-    * xlsx
+    * matrixStats
+    * NanoStringQCPro
+    * pheatmap
     * readxl
-    * writexl
-    * ComplexHeatmap
-    * circlize
     * rstatix
-    * ggpubr
+    * RUVSeq
+    * stringr
+    * survival
+    * survminer
+    * tidyr
+    * writexl
+    * xlsx
